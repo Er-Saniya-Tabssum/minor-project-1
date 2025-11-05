@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trustify: Securing Every UPI Payment with AI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --light-bg: #f8fafc;
+            --dark-text: #1e293b;
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .btn-custom {
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-1px);
+        }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            padding: 12px 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .result-card {
+            border-left: 5px solid;
+            background: white;
+        }
+
+        .result-allow {
+            border-left-color: var(--success-color);
+            background: linear-gradient(45deg, #f0fdf4, #ffffff);
+        }
+
+        .result-verify {
+            border-left-color: var(--warning-color);
+            background: linear-gradient(45deg, #fffbeb, #ffffff);
+        }
+
+        .result-block {
+            border-left-color: var(--danger-color);
+            background: linear-gradient(45deg, #fef2f2, #ffffff);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), #1d4ed8);
+        }
+
+        .risk-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .risk-low {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .risk-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .risk-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .loading-spinner {
+            display: none;
+        }
+
+        .loading .loading-spinner {
+            display: inline-block;
+        }
+
+        .loading .btn-text {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .transaction-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .progress-custom {
+            height: 12px;
+            border-radius: 6px;
+            background-color: #e2e8f0;
+        }
+
+        .progress-bar-custom {
+            border-radius: 6px;
+            transition: width 0.6s ease;
+        }
+
+        /* BIGGER CHART CONTAINERS */
+        .chart-container-large {
+            position: relative;
+            height: 400px !important;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container-xl {
+            position: relative;
+            height: 500px !important;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        /* Force all charts to respect custom heights */
+        canvas {
+            width: 100% !important;
+            height: auto !important;
+        }
+        
+        #analyticsChart {
+            min-height: 400px !important;
+            max-height: 400px !important;
+        }
+        
+        #riskChart, #timelineChart {
+            min-height: 500px !important;
+            max-height: 500px !important;
+        }
+
+        /* Responsive chart sizes */
+        @media (max-width: 768px) {
+            .chart-container-large {
+                height: 300px !important;
+            }
+            
+            .chart-container-xl {
+                height: 350px !important;
+            }
+            
+            #analyticsChart {
+                min-height: 300px !important;
+                max-height: 300px !important;
+            }
+            
+            #riskChart, #timelineChart {
+                min-height: 350px !important;
+                max-height: 350px !important;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .chart-container-large {
+                height: 500px !important;
+            }
+            
+            .chart-container-xl {
+                height: 600px !important;
+            }
+            
+            #analyticsChart {
+                min-height: 500px !important;
+                max-height: 500px !important;
+            }
+            
+            #riskChart, #timelineChart {
+                min-height: 600px !important;
+                max-height: 600px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fas fa-shield-alt me-2"></i>
+                <span class="fw-bold">Trustify: Securing Every UPI Payment with AI</span>
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text">
+                    <i class="fas fa-circle text-success me-1"></i>
+                    System Online
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- System Status Dashboard -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="fas fa-exchange-alt text-primary fs-2 mb-2"></i>
+                    <h4 id="totalTransactions" class="mb-1">0</h4>
+                    <p class="text-muted mb-0">Transactions Processed</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="fas fa-check-circle text-success fs-2 mb-2"></i>
+                    <h4 id="allowedTransactions" class="mb-1">0</h4>
+                    <p class="text-muted mb-0">Allowed</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="fas fa-exclamation-triangle text-warning fs-2 mb-2"></i>
+                    <h4 id="verifyTransactions" class="mb-1">0</h4>
+                    <p class="text-muted mb-0">Need Verification</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <i class="fas fa-ban text-danger fs-2 mb-2"></i>
+                    <h4 id="blockedTransactions" class="mb-1">0</h4>
+                    <p class="text-muted mb-0">Blocked</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Transaction Input Form -->
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 d-flex align-items-center">
+                            <i class="fas fa-plus-circle text-primary me-2"></i>
+                            New Transaction Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="fraudDetectionForm">
+                            <!-- Basic Transaction Info -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Transaction ID</label>
+                                    <input type="text" class="form-control" id="transactionId" 
+                                           placeholder="TXN_001" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Amount (₹)</label>
+                                    <input type="number" class="form-control" id="amount" 
+                                           placeholder="2500" required min="1" step="0.01">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Sender UPI ID</label>
+                                    <input type="text" class="form-control" id="senderId" 
+                                           placeholder="user123@upi" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Receiver UPI ID</label>
+                                    <input type="text" class="form-control" id="receiverId" 
+                                           placeholder="merchant456@upi" required>
+                                </div>
+                            </div>
+
+                            <!-- Transaction Details -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Transaction Hour</label>
+                                    <select class="form-select" id="transactionTime" required>
+                                        <option value="">Select hour</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Transaction Type</label>
+                                    <select class="form-select" id="transactionType" required>
+                                        <option value="Send">Send Money</option>
+                                        <option value="Request">Request Money</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Device & Location -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Device OS</label>
+                                    <select class="form-select" id="osVersion" required>
+                                        <option value="Android_13">Android 13</option>
+                                        <option value="Android_12">Android 12</option>
+                                        <option value="iOS_16">iOS 16</option>
+                                        <option value="iOS_15">iOS 15</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Distance from Last Txn (km)</label>
+                                    <input type="number" class="form-control" id="geoDistance" 
+                                           placeholder="5.2" min="0" step="0.1">
+                                </div>
+                            </div>
+
+                            <!-- Risk Factors -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Receiver Age (days)</label>
+                                    <input type="number" class="form-control" id="receiverAge" 
+                                           placeholder="365" min="1" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Regular User OR  Not</label>
+                                    <input type="number" class="form-control" id="receiverFraudReports" 
+                                           placeholder="0" min="0" required>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Options (Collapsible) -->
+                            <div class="mb-3">
+                                <button class="btn btn-outline-secondary btn-sm" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#advancedOptions">
+                                    <i class="fas fa-cog me-1"></i>
+                                    Advanced Options
+                                </button>
+                            </div>
+
+                            <div class="collapse" id="advancedOptions">
+                                <div class="card card-body bg-light">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Frequency (24h)</label>
+                                            <input type="number" class="form-control" id="frequency24h" 
+                                                   value="3" min="1">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Avg Amount Last Week</label>
+                                            <input type="number" class="form-control" id="avgAmountWeek" 
+                                                   value="2000" min="1">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">App Open to Pay (sec)</label>
+                                            <input type="number" class="form-control" id="openToPay" 
+                                                   value="25" min="1">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">OTP Entry Delay (sec)</label>
+                                            <input type="number" class="form-control" id="otpDelay" 
+                                                   value="12" min="1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary btn-custom me-md-2" 
+                                        onclick="fillSampleData()">
+                                    <i class="fas fa-magic me-1"></i>
+                                    Fill Sample Data
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-custom" id="analyzeBtn">
+                                    <span class="btn-text">
+                                        <i class="fas fa-search me-1"></i>
+                                        Analyze Transaction
+                                    </span>
+                                    <span class="loading-spinner">
+                                        <i class="fas fa-spinner fa-spin me-1"></i>
+                                        Analyzing...
+                                    </span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Batch Processing -->
+                <div class="card">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 d-flex align-items-center">
+                            <i class="fas fa-layer-group text-primary me-2"></i>
+                            Batch Processing
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Upload CSV File</label>
+                            <input type="file" class="form-control" id="csvFile" accept=".csv">
+                            <small class="text-muted">Upload a CSV file with transaction data</small>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                            <button type="button" class="btn btn-outline-info btn-custom" 
+                                    onclick="downloadSampleCSV()">
+                                <i class="fas fa-download me-1"></i>
+                                Download Sample CSV
+                            </button>
+                            <button type="button" class="btn btn-success btn-custom" 
+                                    onclick="processBatch()" id="batchBtn">
+                                <i class="fas fa-upload me-1"></i>
+                                Process Batch
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results and Analytics -->
+            <div class="col-lg-6">
+                <!-- Latest Result -->
+                <div class="card mb-4" id="resultCard" style="display: none;">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 d-flex align-items-center">
+                            <i class="fas fa-chart-line text-primary me-2"></i>
+                            Analysis Result
+                        </h5>
+                    </div>
+                    <div class="card-body" id="resultContent">
+                        <!-- Result will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Transaction History -->
+                <div class="card">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 d-flex align-items-center">
+                            <i class="fas fa-history text-primary me-2"></i>
+                            Recent Transactions
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="clearHistory()">
+                            <i class="fas fa-trash me-1"></i>
+                            Clear
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="transaction-history" id="transactionHistory">
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                <p>No transactions analyzed yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Chart - BIGGER SIZE -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 d-flex align-items-center">
+                            <i class="fas fa-chart-pie text-primary me-2"></i>
+                            📊 Fraud Detection Analytics Dashboard
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container-large">
+                            <canvas id="analyticsChart" width="800" height="400" style="max-width: 100%; height: 400px !important;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Analytics Row - EVEN BIGGER CHARTS -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 d-flex align-items-center">
+                            <i class="fas fa-chart-area text-success me-2"></i>
+                            Risk Distribution
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container-xl">
+                            <canvas id="riskChart" width="600" height="500" style="max-width: 100%; height: 500px !important;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 d-flex align-items-center">
+                            <i class="fas fa-chart-line text-warning me-2"></i>
+                            Transaction Timeline
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container-xl">
+                            <canvas id="timelineChart" width="600" height="500" style="max-width: 100%; height: 500px !important;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>

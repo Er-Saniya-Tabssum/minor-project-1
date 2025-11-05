@@ -1,0 +1,41 @@
+INFO:models.fraud_pipeline:Fraud detection pipeline loaded successfully
+INFO:__main__:Fraud detection pipeline initialized successfully
+=== UPI Fraud Detection Web Application ===
+Initializing fraud detection pipeline...
+Preprocessor loaded from /Users/deepak/Downloads/project/upi_fraud_detection/models
+Model loaded from: /Users/deepak/Downloads/project/upi_fraud_detection/models/fraud_detection_model.pkl
+✅ Pipeline loaded successfully!
+🚀 Starting web application on http://0.0.0.0:5001
+
+Available endpoints:
+  GET  /                     - Web Interface
+  GET  /api/health           - Health check
+  POST /api/detect-fraud     - Single fraud detection
+  POST /api/batch-detect     - Batch fraud detection
+  GET  /api/model-info       - Model information
+  GET  /api/statistics       - API statistics
+  POST /api/update-thresholds - Update thresholds
+  GET  /api/sample-transaction - Get sample data
+  GET  /api/test-scenarios   - Get test scenarios
+  GET  /api/test-fraud-detection - Test with sample data
+  POST /api/reset-stats      - Reset statistics
+
+============================================================
+🌐 Open http://localhost:5001 in your browser to use the web interface!
+============================================================
+ * Serving Flask app 'web_app'
+ * Debug mode: on
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.1.33:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:models.fraud_pipeline:Fraud detection pipeline loaded successfully
+INFO:__main__:Fraud detection pipeline initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 128-246-356
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
